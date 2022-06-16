@@ -25,9 +25,9 @@ service LocationService {
 
 - - - - - - - - - - - - - -
 
-#########################################################
-#             How to make a sample request				#
-#########################################################
+##############################################
+#     How to make a sample request			#
+##############################################
 
 
 1. Install the requirements in modules/location-producer/
