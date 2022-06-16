@@ -1,0 +1,19 @@
+
+Refactoring Monolith:
+
+1. I created connection and person microservices which both use REST API message passing.
+2. I created locations microservice which uses gRPC and Kafka message passing techniques.
+
+Decisions:
+
+1. I created a connection microservice using the REST API when the users access the frontend.
+Since it's customer-facing, using REST would be a good choice as message passing option.
+
+2. I created a person microservice since there is little dependency on it in the main application. 
+Designing a REST API would be suitable in this case as we need to get and post requests via http. 
+Also, we have to treat each request independenty.
+
+3. Since location data is gathered by mobile devices, it is essential to use a message queue such as Kafka.
+Using Kafka will help process locations if the volume increases, and should be in the refactoring. Also, to
+make sure that data is properly structured, gRPC is needed before Kafka. This will ensure security, and speed
+in passing the data.
