@@ -80,8 +80,28 @@ Afterwards, you can test that `kubectl` works by running a command like `kubectl
 2. `kubectl apply -f deployment/db-secret.yaml` - Set up secrets for the pods
 3. `kubectl apply -f deployment/postgres.yaml` - Set up a Postgres database running PostGIS
 4. `kubectl apply -f deployment/udaconnect-api.yaml` - Set up the service and deployment for the API
-5. `kubectl apply -f deployment/udaconnect-app.yaml` - Set up the service and deployment for the web app
-6. `sh scripts/run_db_command.sh <POD_NAME>` - Seed your database against the `postgres` pod. (`kubectl get pods` will give you the `POD_NAME`)
+5. `kubectl apply -f deployment/udaconnect-connection.yaml` - Set up the service and deployment for the connection API
+6. `kubectl apply -f deployment/udaconnect-app.yaml` - Set up the service and deployment for the web app
+7. `kubectl apply -f deployment/udaconnect-location-consumer.yaml` - Set up the consumer service of the location microservice.
+8. `kubectl apply -f deployment/udaconnect-location-producer` - Set up the producer service of the location microservice.
+9. `kubectl apply -f deployment/udaconnect-persons` - Set up the service of the persons api and microservice.
+10. `sh scripts/run_db_command.sh <POD_NAME>` - Seed your database against the `postgres` pod. (`kubectl get pods` will give you the `POD_NAME`)
+11. Install and activate kafka using Strimzi
+   - Create the kafka namespace and install Strimzi files
+   	`kubectl apply -f deployment/udaconnect-kafka.yaml`
+   - Provision Kafka cluster
+	`kubectl apply -f https://strimzi.io/examples/latest/kafka/kafka-persistent-single.yaml -n kafka`
+   - (Wait while Kubernetes starts the required pods, services and so on)
+   	`kubectl wait kafka/my-cluster --for=condition=Ready --timeout=300s -n kafka`
+   - Once kafka is ready, start sending and receiving messages.
+
+**Create a producer**
+	`kubectl -n kafka run kafka-producer -ti --image=quay.io/strimzi/kafka:0.26.0-kafka-3.0.0 --rm=true --restart=Never -- bin/kafka-console-producer.sh --broker-list my-cluster-kafka-bootstrap:9092 --topic location`
+
+**Create a consumer**
+	`kubectl -n kafka run kafka-consumer -ti --image=quay.io/strimzi/kafka:0.26.0-kafka-3.0.0 --rm=true --restart=Never -- bin/kafka-console-consumer.sh --bootstrap-server my-cluster-kafka-bootstrap:9092 --topic location --from-beginning`
+
+12. The commands used are also found under */scripts/deployment_build.sh*
 
 Manually applying each of the individual `yaml` files is cumbersome but going through each step provides some context on the content of the starter project. In practice, we would have reduced the number of steps by running the command against a directory to apply of the contents: `kubectl apply -f deployment/`.
 
@@ -96,6 +116,10 @@ These pages should also load on your web browser:
 * `http://localhost:30001/` - OpenAPI Documentation
 * `http://localhost:30001/api/` - Base path for API
 * `http://localhost:30000/` - Frontend ReactJS Application
+* `http://localhost:30010/` - Persons API Documentation
+* `http://localhost:30010/api/` - Base path for Persons API
+* `http://localhost:30040/` - Connection API Documentation
+* `http://localhost:30040/api` - Base path for Connection API
 
 #### Deployment Note
 You may notice the odd port numbers being served to `localhost`. [By default, Kubernetes services are only exposed to one another in an internal network](https://kubernetes.io/docs/concepts/services-networking/service/). This means that `udaconnect-app` and `udaconnect-api` can talk to one another. For us to connect to the cluster as an "outsider", we need to a way to expose these services to `localhost`.
